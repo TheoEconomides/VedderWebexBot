@@ -73,19 +73,19 @@ class DeviceAPI:
 
     def getCallStats(self, deviceid):
         stats_result = self.getStatus(deviceid, requote_uri("MediaChannels.Call[*].channel[*].*"))
-        for callnumber in stats_result['result']['MediaChannels']['Call']:
-            callid = callnumber['id']
-            for channelnumber in callnumber['Channel']:
-                channelid = channelnumber['id']
-                channeldir = channelnumber['Direction']
-                channeltype = channelnumber['Type']
-                channelnetloss = channelnumber['Netstat']['Loss']
-                channelnetrate = channelnumber['Netstat']['ChannelRate']
-                channelnetbytes = channelnumber['Netstat']['Bytes']
-                channelnetjitter = channelnumber['Netstat']['Jitter']
-                channelnetmaxjitter = channelnumber['Netstat']['MaxJitter']
-                print("callid: {}, dir: {}, type: {}, rate: {}, loss: {}, jitter: {}".
-                      format(callid, channeldir, channeltype, channelnetrate, channelnetloss, channelnetjitter))
+        # for callnumber in stats_result['result']['MediaChannels']['Call']:
+        #     callid = callnumber['id']
+        #     for channelnumber in callnumber['Channel']:
+        #         channelid = channelnumber['id']
+        #         channeldir = channelnumber['Direction']
+        #         channeltype = channelnumber['Type']
+        #         channelnetloss = channelnumber['Netstat']['Loss']
+        #         channelnetrate = channelnumber['Netstat']['ChannelRate']
+        #         channelnetbytes = channelnumber['Netstat']['Bytes']
+        #         channelnetjitter = channelnumber['Netstat']['Jitter']
+        #         channelnetmaxjitter = channelnumber['Netstat']['MaxJitter']
+        #         print("callid: {}, dir: {}, type: {}, rate: {}, loss: {}, jitter: {}".
+        #               format(callid, channeldir, channeltype, channelnetrate, channelnetloss, channelnetjitter))
         return stats_result
 
     def sendCommand(self, keyPath, payload):

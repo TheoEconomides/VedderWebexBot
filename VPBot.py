@@ -406,7 +406,7 @@ def show_connection_status(dial_result, teamsroomid, parent_msgid):
 
 def show_call_stats(deviceid):
     stats_result = devices.getCallStats(deviceid)
-    stats_card = build_stats_card(stats_result)
+    stats_card = VPBotCards.build_stats_card(stats_result)
     # print('Stats results:', json.dumps(stats_result, indent=4))
     return stats_result
 

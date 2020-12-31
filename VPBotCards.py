@@ -390,13 +390,31 @@ def build_call_status_card(device_name, device_id, call_statuses, parent_msgid):
         "version": "1.2"
     }
 
-    print('card code: ',json.dumps(card_code, indent=4))
-    return (card_code)
+    print('card code: ', json.dumps(card_code, indent=4))
+    return card_code
 
 
 def build_stats_card(stats_json):
-
-    return stats_card
+    card_actions = []
+    for callnumber in stats_json['result']['MediaChannels']['Call']:
+        callid = callnumber['id']
+        for channelnumber in callnumber['Channel']:
+            channelid = channelnumber['id']
+            channeldir = channelnumber['Direction']
+            channeltype = channelnumber['Type']
+            channelnetloss = channelnumber['Netstat']['Loss']
+            channelnetrate = channelnumber['Netstat']['ChannelRate']
+            channelnetbytes = channelnumber['Netstat']['Bytes']
+            channelnetjitter = channelnumber['Netstat']['Jitter']
+            channelnetmaxjitter = channelnumber['Netstat']['MaxJitter']
+            print("callid: {}, dir: {}, type: {}, rate: {}, loss: {}, jitter: {}".
+                  format(callid, channeldir, channeltype, channelnetrate, channelnetloss, channelnetjitter))
+    card_code = {
+        "type": "AdaptiveCard",
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+        "version": "1.2"
+    }
+    return card_code
 
 
 def build_hangup_card(device_name, device_id, call_statuses, parent_msgid):
