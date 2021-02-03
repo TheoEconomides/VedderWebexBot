@@ -16,8 +16,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class DeviceAPI:
     def __init__(self, auth):
         self._authHeader = self.genHeader(auth)
-        self._apiUrls = {'status': 'https://webexapis.com/v1/device/xapi/status',
-                         'command': 'https://webexapis.com/v1/device/xapi/command',
+        self._apiUrls = {'status': 'https://webexapis.com/v1/xapi/status',
+                         'command': 'https://webexapis.com/v1/xapi/command',
                          'devices': 'https://webexapis.com/v1/devices'
                          }
 
@@ -71,6 +71,18 @@ class DeviceAPI:
                              'duration': callduration})
         return(response)
 
+    def setMuteOn (self, deviceid):
+        muteresult = self.sendCommand("audio.microphones.mute", '{"deviceId": "'+deviceid+'", "arguments": {}}')
+        print ("muteresult: {}".format(muteresult))
+        return
+
+
+    def setMuteOff (self, deviceid):
+        muteresult = self.sendCommand("audio.microphones.unmute", '{"deviceId": "'+deviceid+'", "arguments": {}}')
+        print ("muteresult: {}".format(muteresult))
+        return
+
+
     def getCallStats(self, deviceid):
         stats_result = self.getStatus(deviceid, requote_uri("MediaChannels.Call[*].channel[*].*"))
         # for callnumber in stats_result['result']['MediaChannels']['Call']:
@@ -90,7 +102,7 @@ class DeviceAPI:
 
     def sendCommand(self, keyPath, payload):
         url = self._apiUrls['command']
-        print("{}/{} - {}".format(url, keyPath,payload))
+        print("{}/{} - {}".format(url, keyPath, payload))
         return self.post("{}/{}".format(url, keyPath), payload)
 
     def get(self, url):

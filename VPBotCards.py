@@ -6,6 +6,8 @@ __copyright__ = "Copyright (c) 2020 Vedder Price PC"
 
 import json
 
+# TODO: add "audio mute" checkbox to enable mute after dialing, leave checked by default
+# TODO: create a "controls" card with mute, cam PTZ, presets, auto-focus trigger
 def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftime, numbertodial, protocoltodial):
     card_code = {
         "type": "AdaptiveCard",
@@ -223,7 +225,24 @@ def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftim
                     "buttonaction": "showcallstatus",
                     "deviceId": devicetodial
                 }
+            },
+            {
+                "type": "Action.Submit",
+                "title": "Mute",
+                "data": {
+                    "buttonaction": "setmute",
+                    "deviceId": devicetodial
+                }
+            },
+            {
+                "type": "Action.Submit",
+                "title": "Unmute",
+                "data": {
+                    "buttonaction": "setunmute",
+                    "deviceId": devicetodial
+                }
             }
+
         ],
         "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
         "version": "1.2"
@@ -356,7 +375,7 @@ def build_call_status_card(device_name, device_id, call_statuses, parent_msgid):
             "type": "Action.Submit",
             "title": "Refresh",
             "data": {
-                "buttonaction": "refreshself",
+                "buttonaction": "showcallstatus",
                 "parentmsgid": parent_msgid,
                 "deviceId": device_id
             }
@@ -394,25 +413,235 @@ def build_call_status_card(device_name, device_id, call_statuses, parent_msgid):
     return card_code
 
 
-def build_stats_card(stats_json):
-    card_actions = []
-    for callnumber in stats_json['result']['MediaChannels']['Call']:
-        callid = callnumber['id']
-        for channelnumber in callnumber['Channel']:
-            channelid = channelnumber['id']
-            channeldir = channelnumber['Direction']
-            channeltype = channelnumber['Type']
-            channelnetloss = channelnumber['Netstat']['Loss']
-            channelnetrate = channelnumber['Netstat']['ChannelRate']
-            channelnetbytes = channelnumber['Netstat']['Bytes']
-            channelnetjitter = channelnumber['Netstat']['Jitter']
-            channelnetmaxjitter = channelnumber['Netstat']['MaxJitter']
+def build_stats_card(stats_json, devicename, device_id, parent_msgid):
+    # TODO: Finish out this stats card
+    # Display call statistics
+    card_body = []
+    stats_array = []
+    body_call_header = {
+            "type": "TextBlock",
+            "text": "Call statistics for {}".format(devicename),
+            "weight": "Bolder",
+            "color": "Dark",
+            "size": "Default"
+        }
+    card_body.append(body_call_header)
+    for calljson in stats_json['result']['MediaChannels']['Call']:
+        callid = calljson['id']
+        # Create a row with the call ID, and column labels "Bit rate," "Jitter," "%loss"
+        column_list = [
+            {
+                "type": "Column",
+                "width": "150px",
+                "style": "Default",
+                "spacing": "None",
+                "items": [{
+                    "type": "TextBlock",
+                    "text": "Call ID: " + str(callid),
+                    "weight": "Bolder",
+                    "color": "Dark",
+                    "size": "Default"
+                }]
+            },
+            {
+                "type": "Column",
+                "width": "80px",
+                "style": "Default",
+                "spacing": "None",
+                "items": [{
+                    "type": "TextBlock",
+                    "text": "Bit rate",
+                    "weight": "Bolder",
+                    "color": "Dark",
+                    "size": "Default"
+                }]
+            },
+            {
+                "type": "Column",
+                "width": "50px",
+                "style": "Default",
+                "spacing": "None",
+                "items": [{
+                    "type": "TextBlock",
+                    "text": "Jitter",
+                    "weight": "Bolder",
+                    "color": "Dark",
+                    "size": "Default"
+                }]
+            },
+            {
+                "type": "Column",
+                "width": "50px",
+                "style": "Default",
+                "spacing": "None",
+                "items": [{
+                    "type": "TextBlock",
+                    "text":" % loss",
+                    "weight": "Bolder",
+                    "color": "Dark",
+                    "size": "Default"
+                }]
+            }
+        ]
+        # Now enclose the columns list into a columnset object, then append to the card
+        columnset_dict = {
+            "type": "ColumnSet",
+            "style": "Default",
+            "spacing": "None",
+            "columns": column_list
+        }
+        card_body.append(columnset_dict)
+
+        # Gather the channel stats info into a dict using the channel id as the 'key'
+        channelstatsarray = []
+        channelidarray = []
+        channelstatsdict = {}
+        for channeljson in calljson['Channel']:
+            channelid = channeljson['id']
+            channeldir = channeljson['Direction']
+            channeltype = channeljson['Type']
+            channelnetloss = channeljson['Netstat']['Loss']
+            channelnetrate = channeljson['Netstat']['ChannelRate']
+            channelnetbytes = channeljson['Netstat']['Bytes']
+            channelnetjitter = channeljson['Netstat']['Jitter']
+            channelnetmaxjitter = channeljson['Netstat']['MaxJitter']
+            channeldict = {
+                "dir": channeldir,
+                "type": channeltype,
+                "netloss": channelnetloss,
+                "netrate": channelnetrate,
+                "netjitter": channelnetjitter,
+                "netbytes": channelnetbytes,
+                "netmaxjitter": channelnetmaxjitter
+            }
+            # channelstatsarray.append(channeldict)
+            channelstatsdict[channelid] = channeldict
+            channelidarray.append(channelid)
+
+        channelidarray.sort()
+        # print("channelstatsdict: {}".format(channelstatsdict))
+        # print("channelIDarray: {}".format(channelidarray))
+
+        # Get the details for this call channel and add a line of data to the card
+        for channelid in channelidarray:
+            channeldir = channelstatsdict[channelid]['dir']
+            channeltype = channelstatsdict[channelid]['type']
+            channelnetloss = channelstatsdict[channelid]['netloss']
+            channelnetrate = channelstatsdict[channelid]['netrate']
+            channelnetbytes = channelstatsdict[channelid]['netbytes']
+            channelnetjitter = channelstatsdict[channelid]['netjitter']
+            channelnetmaxjitter = channelstatsdict[channelid]['netmaxjitter']
             print("callid: {}, dir: {}, type: {}, rate: {}, loss: {}, jitter: {}".
                   format(callid, channeldir, channeltype, channelnetrate, channelnetloss, channelnetjitter))
+
+            # Now add one set of columns, four wide and one deep
+            column_list = [
+                {
+                    "type": "Column",
+                    "width": "150px",
+                    "style": "Default",
+                    "spacing": "None",
+                    "items": [{
+                        "type": "TextBlock",
+                        "text": "{}: {} ({})".format(channeltype, channeldir, channelid),
+                        "weight": "Regular",
+                        "color": "Dark",
+                        "size": "Default"
+                    }]
+                },
+                {
+                    "type": "Column",
+                    "width": "80px",
+                    "style": "Default",
+                    "spacing": "None",
+                    "items": [{
+                        "type": "TextBlock",
+                        "text": "{} k".format(str(channelnetrate/1000)),
+                        "weight": "Bolder",
+                        "color": "Dark",
+                        "size": "Default"
+                    }]
+                },
+                {
+                    "type": "Column",
+                    "width": "50px",
+                    "style": "Default",
+                    "spacing": "None",
+                    "items": [{
+                        "type": "TextBlock",
+                        "text": str(channelnetloss),
+                        "weight": "Bolder",
+                        "color": "Dark",
+                        "size": "Default"
+                    }]
+                },
+                {
+                    "type": "Column",
+                    "width": "50px",
+                    "style": "Default",
+                    "spacing": "None",
+                    "items": [{
+                        "type": "TextBlock",
+                        "text": str(channelnetjitter),
+                        "weight": "Bolder",
+                        "color": "Dark",
+                        "size": "Default"
+                    }]
+                }
+            ]
+
+            # Now enclose the columns list into a columnset object, then append to the card
+            columnset_dict = {
+                "type": "ColumnSet",
+                "style": "Default",
+                "spacing": "None",
+                "columns": column_list
+            }
+            card_body.append(columnset_dict)
+
+    # Finally, put the card_body into a container and set the style to "Emphasis" to make it more
+    # visible.
+    # Set the "selectAction" to "deleteself" so that a click in the colored/emphasis container area will
+    # cause the card to be deleted.
+    card_container = [
+        {
+            "type": "Container",
+            "style": "Default",
+            "items": card_body,
+            "selectAction": {
+                "type": "Action.Submit",
+                "title": "Remove",
+                "data": {
+                    "buttonaction": "deleteself"
+                }
+            }
+        }
+    ]
+
     card_code = {
         "type": "AdaptiveCard",
         "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-        "version": "1.2"
+        "version": "1.2",
+        "body": card_container,
+        "actions": [{
+            "type": "Action.Submit",
+            "title": "Refresh",
+            "data": {
+                "buttonaction": "callstats",
+                "parentmsgid": parent_msgid,
+                "deviceId": device_id
+            }
+        },
+            {
+            "type": "Action.Submit",
+            "title": "Call Status",
+            "data": {
+                "buttonaction": "showcallstatus",
+                "parentmsgid": parent_msgid,
+                "deviceId": device_id
+            }
+        }
+    ]
     }
     return card_code
 

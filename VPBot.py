@@ -240,17 +240,35 @@ def respond_to_button_press(webhook):
         # A display of a device call status has been requested.
         # The first argument to "show_connection_status" is a dict with the required fields of a call_result:
         # {"deviceId": deviceId, "message": message, "parentmsgid": parent_msgid}
+        try:
+            parent_msgid = attachment_action.inputs["parentmsgid"]
+        except:
+            parent_msgid = message_id
         show_connection_status({"deviceId": attachment_action.inputs["deviceId"], "message": "Showing Call Status"},
-                               room.id, message_id)
+                               room.id, parent_msgid)
         return
 
-    elif attachment_action.inputs["buttonaction"] == "refreshself":
-        # A refresh of a device call status has been requested.
-        # The first argument to "show_connection_status" is a dict with the required fields of a call_result:
-        # {"deviceId": deviceId, "message": message}  In this case the "message" is not used
-        parent_msgid = attachment_action.inputs["parentmsgid"]
-        show_connection_status({"deviceId": attachment_action.inputs["deviceId"], "message": "Refreshing"},
-                               room.id, parent_msgid)
+    # elif attachment_action.inputs["buttonaction"] == "refreshself":
+    #     # A refresh of a device call status has been requested.
+    #     # The first argument to "show_connection_status" is a dict with the required fields of a call_result:
+    #     # {"deviceId": deviceId, "message": message}  In this case the "message" is not used
+    #     parent_msgid = attachment_action.inputs["parentmsgid"]
+    #     show_connection_status({"deviceId": attachment_action.inputs["deviceId"], "message": "Refreshing"},
+    #                            room.id, parent_msgid)
+    #     return
+
+    elif attachment_action.inputs["buttonaction"] == "setmute":
+        # mute the microphones of the device
+        # parent_msgid = attachment_action.inputs["parentmsgid"]
+        deviceid = attachment_action.inputs["deviceId"]
+        devices.setMuteOn(deviceid)
+        return
+
+    elif attachment_action.inputs["buttonaction"] == "setunmute":
+        # unmute the microphones of the device
+        # parent_msgid = attachment_action.inputs["parentmsgid"]
+        deviceid = attachment_action.inputs["deviceId"]
+        devices.setMuteOff(deviceid)
         return
 
     elif attachment_action.inputs["buttonaction"] == "hangup":
@@ -276,7 +294,7 @@ def respond_to_button_press(webhook):
         # Display the call stats: jitter, bandwidth, etc.
         # The only parameter passed is the deviceId. This will display stats of all current calls on the device
         parent_msgid = attachment_action.inputs["parentmsgid"]
-        stats_result = show_call_stats(attachment_action.inputs["deviceId"])
+        show_call_stats(attachment_action.inputs["deviceId"], room.id, parent_msgid)
         return
 
     elif attachment_action.inputs["buttonaction"] == "deleteself":
@@ -397,18 +415,27 @@ def show_connection_status(dial_result, teamsroomid, parent_msgid):
         attachments=[{
             "contentType": "application/vnd.microsoft.card.adaptive",
             "content": call_status_card
-        }],
+        }]
     )
     print("call_status_card_msg result:")
     print(msg_result)
     return msg_result
 
 
-def show_call_stats(deviceid):
+def show_call_stats(deviceid, teamsroomid, parent_msgid):
     stats_result = devices.getCallStats(deviceid)
-    stats_card = VPBotCards.build_stats_card(stats_result)
-    # print('Stats results:', json.dumps(stats_result, indent=4))
-    return stats_result
+    stats_card = VPBotCards.build_stats_card(stats_result, devices.getDeviceName(deviceid), deviceid, parent_msgid)
+    print('Stats card:', json.dumps(stats_card, indent=4))
+    msg_result = api.messages.create(
+        teamsroomid,
+        text="If you see this your client cannot render cards\n",
+        parentId=parent_msgid,
+        attachments=[{
+            "contentType": "application/vnd.microsoft.card.adaptive",
+            "content": stats_card
+        }]
+    )
+    return
 
 
 def send_booking_card(bookings, roomid, roomname, organizer, dialinfo, deviceID):
