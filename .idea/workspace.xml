@@ -2,11 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f93f333d-d6f1-4c2b-8f8d-4cfae374437d" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CreateBotWebhook.py" beforeDir="false" afterPath="$PROJECT_DIR$/CreateBotWebhook.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DeviceList.py" beforeDir="false" afterPath="$PROJECT_DIR$/DeviceList.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/VPBot.py" beforeDir="false" afterPath="$PROJECT_DIR$/VPBot.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/VPBotCards.py" beforeDir="false" afterPath="$PROJECT_DIR$/VPBotCards.py" afterDir="false" />
     </list>
@@ -17,6 +14,14 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="ProjectId" id="1mQsnKNNwWHAEwNRWBOh6aRvfLn" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -84,5 +89,6 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
 </project>

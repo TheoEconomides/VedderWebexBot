@@ -8,6 +8,8 @@ import json
 
 # TODO: add "audio mute" checkbox to enable mute after dialing, leave checked by default
 # TODO: create a "controls" card with mute, cam PTZ, presets, auto-focus trigger
+
+
 def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftime, numbertodial, protocoltodial):
     card_code = {
         "type": "AdaptiveCard",
@@ -47,7 +49,7 @@ def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftim
                                     {
                                         "type": "TextBlock",
                                         "text": "Organizer:",
-                                        "id": "OrganizerLabel2",
+                                        # "id": "OrganizerLabel2",
                                         "horizontalAlignment": "Left",
                                         "weight": "Bolder",
                                         "size": "Default"
@@ -78,7 +80,7 @@ def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftim
                                     {
                                         "type": "TextBlock",
                                         "text": "Date:",
-                                        "id": "DateLabel",
+                                        # "id": "DateLabel",
                                         "size": "Default",
                                         "weight": "Bolder"
                                     }
@@ -102,7 +104,7 @@ def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftim
                                     {
                                         "type": "TextBlock",
                                         "text": "Start Time:",
-                                        "id": "TimeLabel",
+                                        # "id": "TimeLabel",
                                         "size": "Default",
                                         "weight": "Bolder"
                                     }
@@ -131,7 +133,7 @@ def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftim
                                     {
                                         "type": "TextBlock",
                                         "text": "Number:",
-                                        "id": "number",
+                                        # "id": "number",
                                         "horizontalAlignment": "Left",
                                         "weight": "Bolder",
                                         "size": "Default"
@@ -171,7 +173,7 @@ def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftim
                                     {
                                         "type": "TextBlock",
                                         "text": "Protocol:",
-                                        "id": "protocolLabel",
+                                        # "id": "protocolLabel",
                                         "horizontalAlignment": "Left",
                                         "weight": "Bolder",
                                         "size": "Default"
@@ -209,6 +211,20 @@ def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftim
                                                 "value": "Unknown"
                                             }
                                         ]
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "Column",
+                                "width": "200px",
+                                "items": [
+                                    {
+                                        "type": "Input.Toggle",
+                                        "id": "mutebeforedial",
+                                        "title": "mute before dialing",
+                                        "value": "true",
+                                        "valueOn": "true",
+                                        "valueOff": "false"
                                     }
                                 ]
                             }
@@ -543,7 +559,7 @@ def build_stats_card(stats_json, devicename, device_id, parent_msgid):
                     "spacing": "None",
                     "items": [{
                         "type": "TextBlock",
-                        "text": "{}: {} ({})".format(channeltype, channeldir, channelid),
+                        "text": "{}: {}".format(channeltype, channeldir),
                         "weight": "Regular",
                         "color": "Dark",
                         "size": "Default"
@@ -632,7 +648,7 @@ def build_stats_card(stats_json, devicename, device_id, parent_msgid):
                 "deviceId": device_id
             }
         },
-            {
+             {
             "type": "Action.Submit",
             "title": "Call Status",
             "data": {

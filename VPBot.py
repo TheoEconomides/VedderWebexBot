@@ -229,6 +229,11 @@ def respond_to_button_press(webhook):
     # )
     print("button action: ", attachment_action.to_json())
     if attachment_action.inputs["buttonaction"] == "dial":
+        # If the "mutebeforedial" var is set to "true" mute the video system before calling
+        if attachment_action.inputs["mutebeforedial"] == "true":
+            deviceid = attachment_action.inputs["deviceToDial"]
+            devices.setMuteOn(deviceid)
+        # Now dial the call
         dial_result = dial_calls(attachment_action.to_json())
         print("dial_result: {}".format(json.dumps(dial_result, indent=4)))
         # allow some time to pass before checking the status of the call
@@ -383,6 +388,8 @@ def show_connection_status(dial_result, teamsroomid, parent_msgid):
         device_name = devices.getDeviceName(deviceid)
         call_status_card = VPBotCards.build_call_status_card(device_name, deviceid, call_status, parent_msgid)
     except Exception:
+        # TODO: add code to check the system for number of active calls.  If it is zero, just make this message say
+        #   something like, "No calls, dude"  otherwise, show the error message.
         call_status_card = {
             "type": "AdaptiveCard",
             "body": [
