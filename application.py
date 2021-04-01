@@ -69,7 +69,7 @@ CAT_FACTS_URL = 'https://catfact.ninja/fact'
 
 # Initialize the environment
 # Create the web application instance
-flask_app = Flask(__name__)
+app = Flask(__name__)
 
 # Detect whether the connection is in the development environment or production.  
 # Production implies:
@@ -100,7 +100,7 @@ CARDS_WEBHOOK_EVENT = "created"
 # Core bot functionality
 # Your Webex Teams webhook should point to http://<serverip>:5000/events
 @flask_app.route('/events', methods=['GET', 'POST'])
-def app():
+def webex_teams_webhook_events():
     """Processes incoming requests to the '/events' URI."""
     if request.method == 'GET':
         return ("""<!DOCTYPE html>
@@ -542,4 +542,4 @@ def show_hangup_call_card(calls, teamsroomid, parent_msgid):
 
 if __name__ == '__main__':
     # Start the Flask web server
-    flask_app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
