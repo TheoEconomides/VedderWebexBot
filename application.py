@@ -99,7 +99,7 @@ CARDS_WEBHOOK_EVENT = "created"
 
 # Core bot functionality
 # Your Webex Teams webhook should point to http://<serverip>:5000/events
-@flask_app.route('/events', methods=['GET', 'POST'])
+@app.route('/events', methods=['GET', 'POST'])
 def webex_teams_webhook_events():
     """Processes incoming requests to the '/events' URI."""
     if request.method == 'GET':
