@@ -1,0 +1,11 @@
+from: https://docs.microsoft.com/en-us/azure/app-service/tutorial-python-postgresql-app?tabs=bash%2Cclone
+The app uses production settings when the WEBSITE_HOSTNAME environment variable is set. Azure App Service automatically sets this variable to the URL of the web app, such as msdocs-django.azurewebsites.net.
+This variable could be the way for the bot to know if it's in production or development environment, and to set the auth token appropriately
+
+WEBSITE_HOSTNAME=vpython.azurewebsites.net
+
+To update requirements.txt: pip freeze > requirements.txt
+
+log file tail command: az webapp log tail --name vpython --resource-group UNC-WEB
+
+SSH session: https://vpython.scm.azurewebsites.net/webssh/host

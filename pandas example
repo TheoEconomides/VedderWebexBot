@@ -42,3 +42,18 @@ bookings_frame
 0  Meeting1  2020-11-11  2200  123@webex.com
 1  Meeting2  2020-11-11  2200  123@webex.com
 2  Meeting3  2020-11-11  2200  123@webex.com
+
+------------
+Notes on the steps to display reservations grouped by Meeting1
+1) Get bookings from all devices.  Return start/end times, organizer email & meeting Number
+2) For each booking, search all Webex Meetings of the organizer whose start/end times match the booking
+    - If the match is not a webex meeting (though I don't think that the Webex Meetings API will show meetings that aren't Webex - but then again, they might)
+      but it does have a number to dial, return the number meeting name.  
+    - If the match is a Webex, return meeting ID, Name and anything else that's useful
+    - If neither (number field is empty) this looks like a room reservation.  Return meeting ID and name and something that says "Room reservation".
+      This should only happen if a room is invited to a meeting that has no connect info.  Likely it is an error.
+    - If there is no match with organizer and start/end times, this is a non-webex meeting 
+3) Now we have a list of 1 (or more) meeting IDs and meeting Names.  Search all invitees to find the 1 and only 1 with the video system as an invitee.
+   (Since if there's more than one meeting in the list, they overlap - same start/end - so the video system should not be in more than one)
+4) Return the meeting ID and Name of the one match.  Store these with the device's booking info.
+5) Return results ggrouped by meeting ID, in chronological order.

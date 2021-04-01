@@ -48,6 +48,7 @@ import json
 from datetime import datetime
 from time import sleep
 import VPBotCards
+import os
 
 __author__ = "Chris Lunsford"
 __author_email__ = "chrlunsf@cisco.com"
@@ -69,8 +70,18 @@ CAT_FACTS_URL = 'https://catfact.ninja/fact'
 # Initialize the environment
 # Create the web application instance
 flask_app = Flask(__name__)
+
+# Detect whether the connection is in the development environment or production.  
+# Production implies:
+#   1) URL for the bot is at "vpython.azurewebsites.com"
+#   2) the 'createdBy' attribute in the inbound JSON is: Y2lzY29zcGFyazovL3VzL1BFT1BMRS83MzljNmIwMC04NzBiLTRiZTMtOTM4ZC1jOTM3YzAwMDdjMjI
+# Development implies:
+#   1) URL for the bot is at "*.ngrok.io"
+#   2) the 'createdBy' attribute in the inbound JSON is: Y2lzY29zcGFyazovL3VzL1BFT1BMRS81Y2JlMjc1Zi1kODAyLTQ5NTMtYWFhOC0wZjYwYmEzNzQ4MTY
+
 # Create the Webex Teams API connection object
-botToken = 'NTdjNjgxODktMDdjYS00ODgwLTg4NjgtNWNhZDRkMDIwYTRhZWI4OTY3MDMtNzgy_PF84_9b4b0d2c-c77b-40fa-9a49-338196f70056'
+#botToken = 'NTdjNjgxODktMDdjYS00ODgwLTg4NjgtNWNhZDRkMDIwYTRhZWI4OTY3MDMtNzgy_PF84_9b4b0d2c-c77b-40fa-9a49-338196f70056'
+botToken = os.environ.get('VP_BOT_TOKEN')
 api = WebexTeamsAPI(botToken)
 devices = DeviceAPI(botToken)
 

@@ -1,9 +1,10 @@
 from webexteamsbot import TeamsBot
+import os
 
-
-bot_token = 'NTdjNjgxODktMDdjYS00ODgwLTg4NjgtNWNhZDRkMDIwYTRhZWI4OTY3MDMtNzgy_PF84_9b4b0d2c-c77b-40fa-9a49-338196f70056'
+#bot_token = 'NTdjNjgxODktMDdjYS00ODgwLTg4NjgtNWNhZDRkMDIwYTRhZWI4OTY3MDMtNzgy_PF84_9b4b0d2c-c77b-40fa-9a49-338196f70056'
+bot_token = os.environ.get('VP_BOT_TOKEN')
 bot_email = 'vp-tsiraki@webex.bot'
-bot_url = "http://34ab65000961.ngrok.io/events"
+bot_url = "http://64877b2ca567.ngrok.io/events"
 bot_event_app_name = "eventBot"
 bot_attach_app_name = "attachBot"
 bot_secret = "BotSecret33"
@@ -34,3 +35,4 @@ botAttach = TeamsBot(
 
 # Add new commands to the box.
 # bot.add_command("/dosomething", "help for do something", do_something)
+
