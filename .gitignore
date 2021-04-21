@@ -4,3 +4,6 @@ venv/
 env.bak/
 venv.bak/
 ENV/
+__pycharm__/
+.vscode/
+.idea/

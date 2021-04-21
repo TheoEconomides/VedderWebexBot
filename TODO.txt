@@ -1,0 +1,32 @@
+    # TODO: figure out how to limit the time frame of the bookings returned.
+
+    # TODO: add code to check the system for number of active calls.  If it is zero, just make this message say
+    #   something like, "No calls, dude"  otherwise, show the error message.
+
+    # TODO: create a "controls" card with mute, cam PTZ, presets, auto-focus trigger
+
+    In VPBotCards, build_booking_card function,                     
+    # TODO: once the API includes the meeting name parameter, it should be added to the parameters passed
+                    #   into this function and displayed with this next snippet of code
+                    # {
+                    #     "type": "TextBlock",
+                    #     "text": "meetingname",
+                    #     "id": "MeetingName",
+                    #     "wrap": True,
+                    #     "color": "Accent"
+                    # },
+                    # TODO: put a container around all elements above the number "dial" button and then add the "deleteself"
+                    #   feature to the container.
+                    # TODO: generally make the card look prettier with some color amd emphases
+
+    In build_stats_card:
+        # TODO: Finish out this stats card
+    
+    TODO: clean up "Call status" response for when there are no active calls
+    TODO: make sure all cards (esp, call stats) have the "delete with click" option
+
+    TODO: reboot command and xstatus systemunit uptime to check for last reboot.
+    TODO: dial command - not associated with bookings
+    TODO: look into PTZ cam controlling
+    TODO: look into the compliance officer settings and how to use that to access other's Webex calendar
+    TODO: scan codecs for errors&warnings

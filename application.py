@@ -42,7 +42,7 @@ from __future__ import (
     unicode_literals,
 )
 from builtins import *
-from DeviceList import DeviceAPI
+from Devicelib import DeviceAPI
 import pytz
 import json
 from datetime import datetime
@@ -204,23 +204,16 @@ def respond_to_message(webhook):
                 filter_str = message_list[1]
                 print ("Filtering on: " + filter_str)
             get_bookings(room.id, filter_str)
-        if "/stat" in message_list[0]:
-            deviceid = 'Y2lzY29zcGFyazovL3VybjpURUFNOnVzLWVhc3QtMl9hL0RFVklDRS82ZDE3MDA4Mi1lODI0LTQyMGQtYmRiNS1kODk2OGUzNmI5NWI='
-            statii = devices.getCallStatus(deviceid)
-            print("statii:")
-            print(json.dumps(statii, indent=4))
-#           api.messages.create(room.id, text=statii)
-#         if "/demo" in message_list[0]:
-#             msg_result = api.messages.create(
-#                 room.id,
-#                 text="If you see this your client cannot render cards\n",
-#                 attachments=[{
-#                     "contentType": "application/vnd.microsoft.card.adaptive",
-#                     "content": VPBotCards.CiscoDefaultCard
-#                 }],
-#             )
-#             print("message result:")
-#             print(msg_result)
+        if "/reboot" in message_list[0]:
+            # reboot a list of endpoints. A search string, message_list[1], is required. It can be "all" or
+            #   a string that matches some number of endpoints
+            print("FOUND: /reboot")
+            if len(message_list) < 2:
+                response = api.messages.create(room.id, text="Please specify a filter string or 'ALL' for all systems")
+            else:
+                response = reboot_devices(room.id, message_list[1])
+            print(response)            
+            
     return ()
 
 
@@ -321,7 +314,6 @@ def respond_to_button_press(webhook):
 
 
 def get_bookings(roomid, filter):
-    # TODO: figure out how to limit the time frame of the bookings returned.
     bookings_text = ""
     # deviceList is type 'dict' with one keypair: "items" and then all the data stored in a list of dicts
     devices_dict = devices.getDevicesSubsetList(filter)
@@ -362,6 +354,19 @@ def get_bookings(roomid, filter):
     return()
 
 
+def reboot_devices(roomid, filter):
+    if filter == 'ALL':
+        filter = ''
+    print("Filter is :", filter)
+    # deviceList is type 'dict' with one keypair: "items" and then all the data stored in a list of dicts
+    devices_dict = devices.getDevicesSubsetList(filter)
+    # dlist is a list of dicts. One dict per device.
+    dlist = devices_dict['items']
+    # print("Device list:", json.dumps(dlist, indent=4))
+    reboot_card = VPBotCards.build_reboot_card(roomid, dlist)
+    return(reboot_card)
+
+
 def dial_calls(callinfo_json):
     # do a POST to get the bookings list
     # print ("Callinfo:")
@@ -399,8 +404,6 @@ def show_connection_status(dial_result, teamsroomid, parent_msgid):
         device_name = devices.getDeviceName(deviceid)
         call_status_card = VPBotCards.build_call_status_card(device_name, deviceid, call_status, parent_msgid)
     except Exception:
-        # TODO: add code to check the system for number of active calls.  If it is zero, just make this message say
-        #   something like, "No calls, dude"  otherwise, show the error message.
         call_status_card = {
             "type": "AdaptiveCard",
             "body": [

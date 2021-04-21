@@ -6,9 +6,6 @@ __copyright__ = "Copyright (c) 2020 Vedder Price PC"
 
 import json
 
-# TODO: add "audio mute" checkbox to enable mute after dialing, leave checked by default
-# TODO: create a "controls" card with mute, cam PTZ, presets, auto-focus trigger
-
 
 def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftime, numbertodial, protocoltodial):
     card_code = {
@@ -26,18 +23,7 @@ def build_booking_card(roomname, devicetodial, organizeremail, confdate, conftim
                         "size": "Default",
                         "color": "Accent"
                     },
-                    # TODO: once the API includes the meeting name parameter, it should be added to the parameters passed
-                    #   into this function and displayed with this next snippet of code
-                    # {
-                    #     "type": "TextBlock",
-                    #     "text": "meetingname",
-                    #     "id": "MeetingName",
-                    #     "wrap": True,
-                    #     "color": "Accent"
-                    # },
-                    # TODO: put a container around all elements above the number "dial" button and then add the "deleteself"
-                    #   feature to the container.
-                    # TODO: generally make the card look prettier with some color amd emphases
+
                     {
                         "type": "ColumnSet",
                         "horizontalAlignment": "Left",
@@ -429,9 +415,8 @@ def build_call_status_card(device_name, device_id, call_statuses, parent_msgid):
     return card_code
 
 
+# Display call statistics
 def build_stats_card(stats_json, devicename, device_id, parent_msgid):
-    # TODO: Finish out this stats card
-    # Display call statistics
     card_body = []
     stats_array = []
     body_call_header = {
@@ -803,3 +788,6 @@ def build_hangup_card(device_name, device_id, call_statuses, parent_msgid):
         "version": "1.2"
     }
     return(card_code)
+
+def build_reboot_card(roomid, dlist):
+    return()
