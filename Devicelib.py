@@ -57,19 +57,39 @@ class DeviceAPI:
         # Gather all relevant call info to return as a dict
         # There should be, at most, two calls in a device, but usually just one or none
         call_status = self.getStatus(deviceId, requote_uri("Call[*].Status"))
-        # print('Full call status:',call_status)
-        # Iterate through the call(s) and assemble the response dict
-        response = []
-        for call in call_status['result']['Call']:
-            callid = str(call['id'])
-            callstatus = call['Status']
-            callbacknumber = self.getStatus(deviceId,requote_uri("Call["+callid+"].CallbackNumber"))['result']['Call'][0]['CallbackNumber']
-            calltype = self.getStatus(deviceId,requote_uri("Call["+callid+"].Calltype"))['result']['Call'][0]['CallType']
-            callduration = self.getStatus(deviceId,requote_uri("Call["+callid+"].Duration"))['result']['Call'][0]['Duration']
+        number_active_calls = self.active_call_count(deviceId)
+        # print('Number of active calls: ', number_active_calls)
+        if number_active_calls < 1:
+            response = 0
+            # print("devicelib: getcallststus: setting response to 0")
+        else:
+            # Iterate through the call(s) and assemble the response dict
+            response = []
+            for call in call_status['result']['Call']:
+                callid = str(call['id'])
+                callstatus = call['Status']
+                callbacknumber = self.getStatus(deviceId,requote_uri("Call["+callid+"].CallbackNumber"))['result']['Call'][0]['CallbackNumber']
+                calltype = self.getStatus(deviceId,requote_uri("Call["+callid+"].Calltype"))['result']['Call'][0]['CallType']
+                callduration = self.getStatus(deviceId,requote_uri("Call["+callid+"].Duration"))['result']['Call'][0]['Duration']
 
-            response.append({'id': callid, 'status': callstatus, 'callbacknumber': callbacknumber, 'type': calltype,
-                             'duration': callduration})
+                response.append({'id': callid, 'status': callstatus, 'callbacknumber': callbacknumber, 'type': calltype,
+                                'duration': callduration})
         return(response)
+
+    def active_call_count(self, deviceId):
+        number_active_calls_result = self.getStatus(deviceId, requote_uri("SystemUnit.State.NumberOfActiveCalls"))
+        # print('Full call status:',call_status)
+        number_active_calls = number_active_calls_result['result']['SystemUnit']['State']['NumberOfActiveCalls']
+        return(number_active_calls)
+
+    def getUptime(self, deviceId):
+        try:
+            uptimeDays = self.getStatus(deviceId, requote_uri("SystemUnit.Uptime"))['result']['SystemUnit']['Uptime']/86400
+            # print("uptime: ", '%.1f'%uptimeDays)
+            result = '%.1f'%uptimeDays
+        except Exception:
+            result = 'not reachable'
+        return(result)
 
     def setMuteOn (self, deviceid):
         muteresult = self.sendCommand("audio.microphones.mute", '{"deviceId": "'+deviceid+'", "arguments": {}}')
@@ -82,6 +102,11 @@ class DeviceAPI:
         print ("muteresult: {}".format(muteresult))
         return
 
+    def rebootDevice (self, deviceid):
+        print("rebooting deviceID: {}".format(deviceid))
+        bootcommand = '{"deviceId": "'+deviceid+'", "arguments": {"force": "True"}}'
+        bootresult = self.sendCommand("systemunit.boot", bootcommand)
+        return(bootresult)
 
     def getCallStats(self, deviceid):
         stats_result = self.getStatus(deviceid, requote_uri("MediaChannels.Call[*].channel[*].*"))

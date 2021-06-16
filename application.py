@@ -65,6 +65,16 @@ from webexteamssdk import WebexTeamsAPI, Webhook
 
 # Module constants
 CAT_FACTS_URL = 'https://catfact.ninja/fact'
+# time-related variables
+CT = pytz.timezone('US/Central')
+Zulu = pytz.timezone('UTC')
+localTZ = CT
+
+# webhook-related variables
+MESSAGE_WEBHOOK_RESOURCE = "messages"
+MESSAGE_WEBHOOK_EVENT = "created"
+CARDS_WEBHOOK_RESOURCE = "attachmentActions"
+CARDS_WEBHOOK_EVENT = "created"
 
 
 # Initialize the environment
@@ -80,21 +90,10 @@ app = Flask(__name__)
 #   2) the 'createdBy' attribute in the inbound JSON is: Y2lzY29zcGFyazovL3VzL1BFT1BMRS81Y2JlMjc1Zi1kODAyLTQ5NTMtYWFhOC0wZjYwYmEzNzQ4MTY
 
 # Create the Webex Teams API connection object
-#botToken = 'NTdjNjgxODktMDdjYS00ODgwLTg4NjgtNWNhZDRkMDIwYTRhZWI4OTY3MDMtNzgy_PF84_9b4b0d2c-c77b-40fa-9a49-338196f70056'
 botToken = os.environ.get('VP_BOT_TOKEN')
 api = WebexTeamsAPI(botToken)
 devices = DeviceAPI(botToken)
 
-# time-related variables
-CT = pytz.timezone('US/Central')
-Zulu = pytz.timezone('UTC')
-localTZ = CT
-
-# webhook-related variables
-MESSAGE_WEBHOOK_RESOURCE = "messages"
-MESSAGE_WEBHOOK_EVENT = "created"
-CARDS_WEBHOOK_RESOURCE = "attachmentActions"
-CARDS_WEBHOOK_EVENT = "created"
 
 
 # Core bot functionality
@@ -205,15 +204,23 @@ def respond_to_message(webhook):
                 print ("Filtering on: " + filter_str)
             get_bookings(room.id, filter_str)
         if "/reboot" in message_list[0]:
-            # reboot a list of endpoints. A search string, message_list[1], is required. It can be "all" or
+            # Create a card with the option to reboot a list of endpoints. A search string, 
+            #   message_list[1], is required. It can be "all" or
             #   a string that matches some number of endpoints
+            # "response" is the response from outputting the reboot card to the Teams space
             print("FOUND: /reboot")
             if len(message_list) < 2:
                 response = api.messages.create(room.id, text="Please specify a filter string or 'ALL' for all systems")
             else:
                 response = reboot_devices(room.id, message_list[1])
-            print(response)            
-            
+        if "/help" in message_list[0]:
+            print("FOUND /help")
+            help_msg = 'Vedder C&C Bot help:\n' + \
+                '\t/b [filter string] - list bookings\n' + \
+                '\t/reboot [ALL | filter string] - displays a list of sites to reboot\n' + \
+                '\t/help - display help'
+            response = api.messages.create(room.id, text = help_msg)
+
     return ()
 
 
@@ -249,6 +256,11 @@ def respond_to_button_press(webhook):
         # A display of a device call status has been requested.
         # The first argument to "show_connection_status" is a dict with the required fields of a call_result:
         # {"deviceId": deviceId, "message": message, "parentmsgid": parent_msgid}
+        # 
+        # If the "parentmsgid" exists in the input (meaning the "status" button was clicked from an existing card)
+        #   save it's value in "parent_msgid", otherwise put the current card's msgid in the "parent_msgid" field
+        #   The "parent_msgid" is used only when the the user clicks on the card background, which calls "deleteself"
+        #   in order to delete the card from the chat
         try:
             parent_msgid = attachment_action.inputs["parentmsgid"]
         except:
@@ -306,6 +318,29 @@ def respond_to_button_press(webhook):
         show_call_stats(attachment_action.inputs["deviceId"], room.id, parent_msgid)
         return
 
+    elif attachment_action.inputs["buttonaction"] == "rebootSystems":
+        # Reboot the systems listed by their deviceID
+        # The "systemsToReboot" attribute is a string of device IDs separated by commas. If no systems were
+        #   selected to reboot, the "systemsToReboot" dict key does not exist. 
+        try:
+            for deviceId in (attachment_action.inputs['systemsToReboot']).split(","):
+                print("REBOOTING: {}".format(devices.getDeviceName(deviceId)))
+                result = devices.rebootDevice(deviceId)
+                print("Result: ",result)
+                try:
+                    # if the reboot attempt results in an error message, the line below will generate a KeyError because the dict
+                    #    will not have the ['result']['Description'] duple, so catch the error with try/except and print out the error if
+                    #    it fails
+                    resultstatus = result['result']['Description']
+                    # Print out to the Teams space the result of the reboot command
+                    api.messages.create(room.id, parentId=message_id, text="{}: {}".format(devices.getDeviceName(deviceId), resultstatus))
+                except KeyError:
+                    api.messages.create(room.id, parentId=message_id, text="{}: {}".format(devices.getDeviceName(deviceId), result['message']))
+        except KeyError:
+                print("No Systems Selected for Rebooting")
+
+        return  
+
     elif attachment_action.inputs["buttonaction"] == "deleteself":
         # When a call stats card is clicked anywhere, delete the card
         result = api.messages.delete(attachment_action.messageId)
@@ -355,16 +390,36 @@ def get_bookings(roomid, filter):
 
 
 def reboot_devices(roomid, filter):
+    # get a list of the rooms that match 'filter' and output a card which lists all matches and gives
+    # the option to select which rooms will be rebooted. Then from that card, the actual commands to reboot
+    # will be sent via the "rebootSystems" button action
     if filter == 'ALL':
         filter = ''
-    print("Filter is :", filter)
-    # deviceList is type 'dict' with one keypair: "items" and then all the data stored in a list of dicts
+    print("Reboot: Filter is :", filter)
+    # devices_dict is type 'dict' with one keypair: "items" and then all the data stored in a list of dicts
     devices_dict = devices.getDevicesSubsetList(filter)
     # dlist is a list of dicts. One dict per device.
     dlist = devices_dict['items']
-    # print("Device list:", json.dumps(dlist, indent=4))
+    
+    # Get the active call count and uptime for each device in dlist and add two duples: 
+    #   {"ActiveCalls" : True|False} and {"Uptime" : <days>} to 
+    #   the dict for the device.
+    for device in dlist:
+        device['ActiveCalls'] = devices.active_call_count(device['id'])
+        device['Uptime'] = devices.getUptime(device['id'])
+        # print("Device list:", json.dumps(dlist, indent=4))
+
     reboot_card = VPBotCards.build_reboot_card(roomid, dlist)
-    return(reboot_card)
+    msg_result = api.messages.create(
+        roomid,
+        text="If you see this your client cannot render cards\n",
+        attachments=[{
+            "contentType": "application/vnd.microsoft.card.adaptive",
+            "content": reboot_card
+        }]
+    )
+    # print ("reboot card result:", msg_result)
+    return(msg_result)
 
 
 def dial_calls(callinfo_json):
@@ -392,7 +447,7 @@ def hangup_call(device_id, callid, roomid, parent_msgid):
 
 
 def show_connection_status(dial_result, teamsroomid, parent_msgid):
-    # parent_msgid is the "parent" message ID - namely the bookings card from which the "dial" button was pressed
+    # parent_msgid is the "parent" message ID - namely the bookings card from which the "status" button was pressed
     # all responses to the teams room should have this message id as their parent
     try:
         # first, just see if we can access the deviceId. An error condition would mean that "dial_result" has a
@@ -400,16 +455,25 @@ def show_connection_status(dial_result, teamsroomid, parent_msgid):
         deviceid = dial_result['deviceId']
         # retrieve the call status using the info returned in 'dial_result'
         call_status = devices.getCallStatus(dial_result['deviceId'])
+        # if 'call_status' == 0, then there are no calls. Set the message appropriately and raise an error
+        if call_status == 0:
+            errmsg = 'No active calls'
+            # print("setting no active calls")
+            raise KeyError
         # display the basic dial results in a card
         device_name = devices.getDeviceName(deviceid)
         call_status_card = VPBotCards.build_call_status_card(device_name, deviceid, call_status, parent_msgid)
     except Exception:
+        # if 'errmsg' exists, then it was set to "No active calls" above.  If it is not set, then use the
+        #   original 'dial_result' message
+        if 'errmsg' not in locals() :
+            errmsg = dial_result['message']
         call_status_card = {
             "type": "AdaptiveCard",
             "body": [
                 {
                     "type": "TextBlock",
-                    "text": "ERROR: {}".format(dial_result['message']),
+                    "text": "ERROR: {}".format(errmsg),
                     "color": "Attention",
                     "weight": "Bolder",
                     "wrap": True,
@@ -426,9 +490,7 @@ def show_connection_status(dial_result, teamsroomid, parent_msgid):
             "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
             "version": "1.2"
         }
-        print('ERROR')
-        print(dial_result)
-    # try:
+        print('Dial result:', dial_result)
     msg_result = api.messages.create(
         teamsroomid,
         text="If you see this your client cannot render cards\n",

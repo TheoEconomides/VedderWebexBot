@@ -1,10 +1,10 @@
 from webexteamsbot import TeamsBot
 import os
 
-#bot_token = 'NTdjNjgxODktMDdjYS00ODgwLTg4NjgtNWNhZDRkMDIwYTRhZWI4OTY3MDMtNzgy_PF84_9b4b0d2c-c77b-40fa-9a49-338196f70056'
 bot_token = os.environ.get('VP_BOT_TOKEN')
+print("token:",bot_token)
 bot_email = 'vp-tsiraki@webex.bot'
-bot_url = "http://a3b708c3266d.ngrok.io/events"
+bot_url = "http://02c85ba0c44f.eu.ngrok.io/events"
 bot_event_app_name = "eventBot"
 bot_attach_app_name = "attachBot"
 bot_secret = "BotSecret33"

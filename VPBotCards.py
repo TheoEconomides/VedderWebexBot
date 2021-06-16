@@ -790,4 +790,87 @@ def build_hangup_card(device_name, device_id, call_statuses, parent_msgid):
     return(card_code)
 
 def build_reboot_card(roomid, dlist):
-    return()
+    card_actions = []
+    # dlist is a list of dicts. One dict per device that is to be rebooted.
+    # Iterate through the list to create the card which uses Input.Toggle to place one checkbox per room.
+    # Rooms that have the checkbox will be rebooted when this card's "Submit" button is clicked
+    
+    # First, create the card body and put a title there
+    card_body = [
+        {
+            "type": "TextBlock",
+            "text": "REBOOT DEVICES:",
+            "weight": "Bolder",
+            "color": "Dark",
+            "size": "Default"
+        }
+    ]
+    # Iterate through the room list to create an Input.ChoiceSet that lists each room along with a checkbox
+    # to indicate which system(s) should be rebooted
+    choice_list=[]
+    valuechoices=[]
+    for room in dlist:
+        # First, check to see if the room is offline by checking the room['Uptime'] is < 0
+        if room['Uptime'] == 'not reachable':
+            appendToName = '  *(ROOM OFFLINE)*'
+        else:
+            # print("reboot?",room['displayName'], "id:", room['id'])
+            # If there are active calls on this system, append "(ACTIVE CALLS)" to the room name to make it obvious
+            #   and do not include the room's roomId in the "valuechoices" string, so as to leave this room's 
+            #   reboot checkbox unchecked
+            # print('room[uptime]: ',room['Uptime'])
+            if room['ActiveCalls'] > 0:
+                appendToName = '  *(ACTIVE CALLS)*'
+            else:
+                #  When there are no active calls on the system, don't append the "(ACTIVE CALLS)" but do include
+                #   the system's uptime in days. If uptime is negative, the system is offline
+                #   Include this system's roomId in "valuechoices" so that it's checkbox is checked.
+                appendToName = " (uptime: {} days)".format(room['Uptime'])
+                # valuechoices is a list of the "value" variables whose checkbox should default to checked. In this case,
+                #   all checkboxes should be checked except for systems that have active calls, so append every value to 
+                #   this "valuechoices" string unless room['ActiveCalls'] > 0
+                #   The final value of "valuechoices" is a comma separated string which lists all the device IDs of rooms 
+                #   that should be checked
+                # 
+                if len(valuechoices) > 0:
+                    valuechoices += ","+room['id']
+                else:
+                    valuechoices = room['id']
+
+        # create a duple with the room name and room id and append it to the choice_list
+        choice = {
+            "title": room['displayName']+appendToName,
+            "value": room['id']
+        }
+        choice_list.append(choice)
+
+    # Create the ChoiceSet
+    card_body.append(
+        {
+            "type": "Input.ChoiceSet",
+            "id": "systemsToReboot",
+            "isMultiSelect": True,
+            "style": "expanded",
+            "value": valuechoices,
+            "choices": choice_list
+        }
+    )
+
+    card_actions = [
+        {
+            "type": "Action.Submit",
+            "title": "REBOOT ALL CHECKED SYSTEMS",
+            "data": {
+                "buttonaction": "rebootSystems"
+            }
+        }
+    ]
+    card_code = {
+        "type": "AdaptiveCard",
+        "body": card_body,
+        "actions": card_actions,
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+        "version": "1.2"
+    }
+
+    return(card_code) 
